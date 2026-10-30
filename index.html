@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1222">
+  <meta name="description" content="Turn your photos into pixel art in seconds, directly in your browser.">
+  <title>PixelForge — Turn photos into pixel art</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --bg:#0c1222; --surface:#141d31; --surface2:#1a2740; --line:#32405c;
+      --text:#f2f5fb; --muted:#acb9ce; --accent:#ffc66d; --accent2:#ff9067; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin:0; min-height:100vh; background: radial-gradient(circle at 83% 2%,#233653 0,transparent 33%),var(--bg); color:var(--text); }
+    .shell { width:min(1120px,calc(100% - 36px)); margin:auto; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:28px 0 16px; gap:16px; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:-.03em; font-size:1.32rem; }
+    .logo { display:grid; grid-template-columns:repeat(3,9px); grid-template-rows:repeat(3,9px); gap:2px; transform:rotate(-9deg); }
+    .logo i { display:block; background:var(--accent); border-radius:1px; }
+    .logo i:nth-child(2),.logo i:nth-child(6) {background:#ff926b;}
+    .logo i:nth-child(4),.logo i:nth-child(8) {background:#69c8e1;}
+    .tag { color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:8px 12px; font-size:.78rem; }
+    .hero { padding:38px 0 28px; }
+    .eyebrow { color:var(--accent); font-weight:800; font-size:.77rem; text-transform:uppercase; letter-spacing:.15em; }
+    h1 { margin:9px 0 10px; max-width:790px; font-size:clamp(2.2rem,5.4vw,4.3rem); line-height:1.08; letter-spacing:-.06em; }
+    .hero p { margin:0; max-width:630px; color:var(--muted); font-size:1.06rem; line-height:1.6; }
+    .panel { padding:22px; border:1px solid var(--line); background:rgba(20,29,49,.94); border-radius:18px; box-shadow:0 15px 50px #0307113b; }
+    .control-grid { display:grid; grid-template-columns:1fr 1fr; gap:19px; }
+    .drop { min-height:184px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px;
+      border:2px dashed #65738d; border-radius:13px; text-align:center; background:#1a27408a; padding:22px;
+      transition:border-color .2s,background .2s; cursor:pointer; }
+    .drop:hover,.drop.dragging,.drop:focus-within { border-color:var(--accent); background:#2c3447; }
+    .upload-icon { font-size:1.9rem; line-height:1; color:var(--accent); }
+    .drop strong { font-size:1.03rem; }
+    .drop small { color:var(--muted); line-height:1.5; }
+    input[type=file] { position:absolute; width:1px; height:1px; clip-path:inset(50%); overflow:hidden; }
+    .settings { display:flex; flex-direction:column; justify-content:space-between; padding:4px 2px; gap:19px; }
+    .setting-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:13px; }
+    label,.setting-head span { font-weight:700; font-size:.95rem; }
+    output { color:var(--accent); font-weight:800; font-variant-numeric:tabular-nums; }
+    input[type=range] { width:100%; cursor:pointer; accent-color:var(--accent); }
+    .range-labels { display:flex; justify-content:space-between; color:var(--muted); font-size:.77rem; margin-top:5px; }
+    select { width:100%; padding:13px 14px; border-radius:9px; border:1px solid #60708c; background:var(--surface2); color:var(--text); font:inherit; cursor:pointer; }
+    .hint { margin:8px 0 0; font-size:.82rem; color:var(--muted); }
+    .results-head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:13px; margin:27px 0 13px; }
+    h2 { margin:0; font-size:1.24rem; letter-spacing:-.03em; }
+    button { border:0; border-radius:10px; padding:12px 19px; font:inherit; font-weight:800; cursor:pointer;
+      color:#20202a; background:linear-gradient(120deg,var(--accent),var(--accent2)); }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    button:not(:disabled):hover { filter:brightness(1.1); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+    .preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:17px; }
+    .preview-panel { padding:16px; min-width:0; border:1px solid var(--line); background:var(--surface); border-radius:15px; }
+    .preview-panel h3 { margin:0 0 13px; font-size:.86rem; color:#d9e2f1; letter-spacing:.03em; }
+    .image-well { height:370px; display:flex; justify-content:center; align-items:center; padding:13px; overflow:hidden;
+      border:1px solid #34435f; border-radius:10px; background-color:#182239;
+      background-image:linear-gradient(45deg,#22304a 25%,transparent 25%),linear-gradient(-45deg,#22304a 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#22304a 75%),linear-gradient(-45deg,transparent 75%,#22304a 75%);
+      background-size:28px 28px; background-position:0 0,0 14px,14px -14px,-14px 0; }
+    .image-well img,.image-well canvas { max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain; }
+    #resultCanvas { image-rendering:pixelated; }
+    .empty { color:#b8c6d9; font-size:.94rem; text-align:center; max-width:200px; line-height:1.55; }
+    .meta { font-size:.76rem; color:var(--muted); margin:10px 0 0; min-height:1em; overflow-wrap:anywhere; }
+    .status { margin:13px 0 0; min-height:1.3em; font-size:.88rem; color:var(--muted); }
+    .status.error { color:#ffad9e; }
+    footer { display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:27px 0 38px; color:var(--muted); font-size:.83rem; }
+    footer strong { color:var(--accent); }
+    @media (max-width:700px) {
+      .control-grid,.preview-grid { grid-template-columns:1fr; }
+      .hero { padding:24px 0; }
+      .panel { padding:15px; }
+      .image-well { height:270px; }
+      .tag { display:none; }
+    }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand" aria-label="PixelForge">
+        <span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        PixelForge
+      </div>
+      <span class="tag">FREE · NO ACCOUNT · NO UPLOADS</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="eyebrow">Tiny pixels. Big personality.</div>
+        <h1>Turn any photo into <span style="color:var(--accent)">pixel art.</span></h1>
+        <p>Drop in an image, dial up the retro look, and save the result. All the magic happens inside your browser.</p>
+      </section>
+
+      <section class="panel control-grid" aria-label="Image and pixel-art settings">
+        <label class="drop" id="dropZone" for="fileInput">
+          <span class="upload-icon" aria-hidden="true">▧</span>
+          <strong>Choose a photo or drop it here</strong>
+          <small>JPG, PNG, WebP and other browser-supported images<br>Images stay on your device</small>
+          <input type="file" id="fileInput" accept="image/*" aria-label="Choose an image">
+        </label>
+        <div class="settings">
+          <div>
+            <div class="setting-head"><label for="pixelSize">Pixel size</label><output id="pixelValue" for="pixelSize">12 px</output></div>
+            <input id="pixelSize" type="range" min="2" max="48" value="12" step="1">
+            <div class="range-labels"><span>More detail</span><span>Chunkier pixels</span></div>
+          </div>
+          <div>
+            <div class="setting-head"><label for="palette">Colour style</label></div>
+            <select id="palette">
+              <option value="original">Original colours</option>
+              <option value="retro">Retro 16-colour palette</option>
+              <option value="gameboy">Handheld green (4 colours)</option>
+            </select>
+            <p class="hint">Try a limited palette for a classic game look.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="results-head">
+        <h2>Before &amp; after</h2>
+        <button id="downloadBtn" type="button" disabled>↓ Download PNG</button>
+      </div>
+      <section class="preview-grid" aria-label="Image previews">
+        <div class="preview-panel">
+          <h3>ORIGINAL</h3>
+          <div class="image-well">
+            <p class="empty" id="originalEmpty">Your original image appears here</p>
+            <img id="originalPreview" alt="Original uploaded image" hidden>
+          </div>
+          <p class="meta" id="originalMeta"></p>
+        </div>
+        <div class="preview-panel">
+          <h3>PIXELFORGED ✦</h3>
+          <div class="image-well">
+            <p class="empty" id="resultEmpty">Your pixel-art masterpiece appears here</p>
+            <canvas id="resultCanvas" aria-label="Pixelated result preview" hidden></canvas>
+          </div>
+          <p class="meta" id="resultMeta"></p>
+        </div>
+      </section>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <footer>
+      <span><strong>PixelForge</strong> · Made for the joy of little squares.</span>
+      <span>Private by design — your image never leaves your browser.</span>
+    </footer>
+  </div>
+
+  <script>
+    'use strict';
+
+    const fileInput = document.querySelector('#fileInput');
+    const dropZone = document.querySelector('#dropZone');
+    const pixelSize = document.querySelector('#pixelSize');
+    const pixelValue = document.querySelector('#pixelValue');
+    const paletteSelect = document.querySelector('#palette');
+    const originalPreview = document.querySelector('#originalPreview');
+    const originalEmpty = document.querySelector('#originalEmpty');
+    const originalMeta = document.querySelector('#originalMeta');
+    const resultCanvas = document.querySelector('#resultCanvas');
+    const resultEmpty = document.querySelector('#resultEmpty');
+    const resultMeta = document.querySelector('#resultMeta');
+    const downloadBtn = document.querySelector('#downloadBtn');
+    const status = document.querySelector('#status');
+
+    const palettes = {
+      retro: [
+        '#000000','#1d2b53','#7e2553','#008751','#ab5236','#5f574f','#c2c3c7','#fff1e8',
+        '#ff004d','#ffa300','#ffec27','#00e436','#29adff','#83769c','#ff77a8','#ffccaa'
+      ],
+      gameboy: ['#0f380f','#306230','#8bac0f','#9bbc0f']
+    };
+
+    const paletteRGB = Object.fromEntries(Object.entries(palettes).map(([key, colors]) => [
+      key, colors.map(hex => [1,3,5].map(index => parseInt(hex.slice(index,index + 2),16)))
+    ]));
+
+    let currentImage = null;
+    let objectUrl = null;
+    let baseFilename = 'pixel-art';
+    const MAX_OUTPUT_DIMENSION = 2000;
+
+    function report(message, isError = false) {
+      status.textContent = message;
+      status.classList.toggle('error', isError);
+    }
+
+    function closestColour(r, g, b, colors) {
+      let best = colors[0];
+      let bestDistance = Infinity;
+      for (const color of colors) {
+        const distance = (r-color[0])**2 + (g-color[1])**2 + (b-color[2])**2;
+        if (distance < bestDistance) { best = color; bestDistance = distance; }
+      }
+      return best;
+    }
+
+    function render() {
+      pixelValue.textContent = `${pixelSize.value} px`;
+      if (!currentImage) return;
+
+      const image = currentImage;
+      const scale = Math.min(1, MAX_OUTPUT_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const block = Number(pixelSize.value);
+      const smallWidth = Math.max(1, Math.ceil(width / block));
+      const smallHeight = Math.max(1, Math.ceil(height / block));
+
+      const smallCanvas = document.createElement('canvas');
+      smallCanvas.width = smallWidth;
+      smallCanvas.height = smallHeight;
+      const smallContext = smallCanvas.getContext('2d', { willReadFrequently: true });
+      smallContext.drawImage(image, 0, 0, smallWidth, smallHeight);
+
+      const chosenPalette = paletteRGB[paletteSelect.value];
+      if (chosenPalette) {
+        const pixels = smallContext.getImageData(0, 0, smallWidth, smallHeight);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          if (pixels.data[i + 3] === 0) continue;
+          const [r,g,b] = closestColour(pixels.data[i],pixels.data[i+1],pixels.data[i+2],chosenPalette);
+          pixels.data[i] = r; pixels.data[i+1] = g; pixels.data[i+2] = b;
+        }
+        smallContext.putImageData(pixels, 0, 0);
+      }
+
+      resultCanvas.width = width;
+      resultCanvas.height = height;
+      const resultContext = resultCanvas.getContext('2d');
+      resultContext.imageSmoothingEnabled = false;
+      resultContext.clearRect(0, 0, width, height);
+      resultContext.drawImage(smallCanvas, 0, 0, width, height);
+
+      resultEmpty.hidden = true;
+      resultCanvas.hidden = false;
+      downloadBtn.disabled = false;
+      resultMeta.textContent = `${width} × ${height} PNG · ${smallWidth} × ${smallHeight} pixel-art grid`;
+      report('Ready! Change the settings or download your pixel art.');
+    }
+
+    function loadFile(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        report('Please choose an image file.', true); return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        report('Please choose an image smaller than 20 MB.', true); return;
+      }
+      const newUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = newUrl;
+        currentImage = image;
+        baseFilename = file.name.replace(/\.[^/.]+$/, '') || 'pixel-art';
+        originalPreview.src = objectUrl;
+        originalPreview.hidden = false;
+        originalEmpty.hidden = true;
+        originalMeta.textContent = `${file.name} · ${image.naturalWidth} × ${image.naturalHeight}`;
+        render();
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(newUrl);
+        report('This image could not be opened. Try a JPG, PNG or WebP file.', true);
+      };
+      image.src = newUrl;
+    }
+
+    fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
+    pixelSize.addEventListener('input', render);
+    paletteSelect.addEventListener('change', render);
+
+    ['dragenter','dragover'].forEach(eventName => dropZone.addEventListener(eventName, event => {
+      event.preventDefault();
+      dropZone.classList.add('dragging');
+    }));
+    ['dragleave','drop'].forEach(eventName => dropZone.addEventListener(eventName, event => {
+      event.preventDefault();
+      dropZone.classList.remove('dragging');
+    }));
+    dropZone.addEventListener('drop', event => loadFile(event.dataTransfer.files[0]));
+
+    downloadBtn.addEventListener('click', () => {
+      if (!currentImage) return;
+      resultCanvas.toBlob(blob => {
+        if (!blob) { report('Could not create the PNG. Please try again.', true); return; }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${baseFilename}-pixelforge.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
+    });
+  </script>
+</body>
+</html>
