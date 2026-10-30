@@ -117,6 +117,9 @@
               <option value="adaptive-128">128 colours (adaptive)</option>
               <option value="adaptive-256">256 colours (adaptive)</option>
               <option value="atari256">Atari 8-bit (GTIA 256)</option>
+              <option value="c64">Commodore 64 (16 colours)</option>
+              <option value="spectrum">ZX Spectrum (15 colours)</option>
+              <option value="cpc">Amstrad CPC (27 colours)</option>
             </select>
             <p class="hint">Adaptive modes pick colours from your photo; retro modes use classic palettes.</p>
           </div>
@@ -172,15 +175,68 @@
 
     
   const palettes = {
-    retro: [
-      '#000000','#1d2b53','#7e2553','#008751',
-      '#ab5236','#5f574f','#c2c3c7','#fff1e8',
-      '#ff004d','#ffa300','#ffec27','#00e436',
-      '#29adff','#83769c','#ff77a8','#ffccaa'
-    ],
-    gameboy: ['#0f380f','#306230','#8bac0f','#9bbc0f'],
-    atari256: buildAtariPalette()
-  };
+  retro: [
+    '#000000','#1d2b53','#7e2553','#008751',
+    '#ab5236','#5f574f','#c2c3c7','#fff1e8',
+    '#ff004d','#ffa300','#ffec27','#00e436',
+    '#29adff','#83769c','#ff77a8','#ffccaa'
+  ],
+
+  gameboy: ['#0f380f','#306230','#8bac0f','#9bbc0f'],
+
+  atari256: buildAtariPalette(),
+
+  c64: [
+    '#000000', // black
+    '#ffffff', // white
+    '#883932', // red
+    '#67b6bd', // cyan
+    '#8b3f96', // purple
+    '#55a049', // green
+    '#40318d', // blue
+    '#bfce72', // yellow
+    '#8b5429', // orange
+    '#574200', // brown
+    '#b86962', // light red
+    '#505050', // dark grey
+    '#787878', // grey
+    '#94e089', // light green
+    '#7869c4', // light blue
+    '#9f9f9f'  // light grey
+  ],
+
+  spectrum: [
+    '#000000', // black
+    '#0000d7', // blue
+    '#d70000', // red
+    '#d700d7', // magenta
+    '#00d700', // green
+    '#00d7d7', // cyan
+    '#d7d700', // yellow
+    '#d7d7d7', // white
+    '#0000ff', // bright blue
+    '#ff0000', // bright red
+    '#ff00ff', // bright magenta
+    '#00ff00', // bright green
+    '#00ffff', // bright cyan
+    '#ffff00', // bright yellow
+    '#ffffff'  // bright white
+  ],
+
+  cpc: [
+    '#000000','#000080','#0000ff',
+    '#800000','#800080','#8000ff',
+    '#ff0000','#ff0080','#ff00ff',
+
+    '#008000','#008080','#0080ff',
+    '#808000','#808080','#8080ff',
+    '#ff8000','#ff8080','#ff80ff',
+
+    '#00ff00','#00ff80','#00ffff',
+    '#80ff00','#80ff80','#80ffff',
+    '#ffff00','#ffff80','#ffffff'
+  ]
+};
 
 
     const paletteRGB = Object.fromEntries(
